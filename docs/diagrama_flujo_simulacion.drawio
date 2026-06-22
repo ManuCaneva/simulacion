@@ -1,0 +1,160 @@
+<mxfile host="app.diagrams.net" agent="Gemini">
+  <diagram id="diagram_1" name="Simulación Evento a Evento">
+    <mxGraphModel dx="2642" dy="1340" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="init" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f3f5;strokeColor=#495057;strokeWidth=2;fontStyle=1;align=center;padding=8;" value="&lt;b&gt;1. Inicio y Condiciones Iniciales (C.I.)&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;T = 0 (Reloj)&lt;br/&gt;TPLL = 0&lt;br/&gt;TPS = ∞ (HV)&lt;br/&gt;OB = 0 (Buffer vacío)&lt;br/&gt;EstadoAP = Ocioso&lt;br/&gt;CPP = 0 (Paquetes Perdidos)&lt;br/&gt;CTP = 0 (Total Paquetes)" vertex="1">
+          <mxGeometry height="150" width="220" x="310" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="motor" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e7f1ff;strokeColor=#0d6efd;strokeWidth=1.5;align=center;padding=5;" value="&lt;b&gt;¿TPLL ≤ TPS?&lt;/b&gt;&lt;br/&gt;(Motor Evento a Evento)" vertex="1">
+          <mxGeometry height="110" width="160" x="340" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="e_init_motor" edge="1" parent="1" source="init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="motor" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_t" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;T = TPLL&lt;/b&gt;&lt;br/&gt;(Avanza reloj a la llegada)" vertex="1">
+          <mxGeometry height="50" width="150" x="130" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mot_arr" edge="1" parent="1" source="motor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;fontStyle=1;strokeColor=#0d6efd;strokeWidth=1.5;" target="arr_t" value="SÍ (Llegada)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_ctp" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;CTP = CTP + 1&lt;/b&gt;&lt;br/&gt;(Nuevo paquete)" vertex="1">
+          <mxGeometry height="50" width="150" x="130" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr1" edge="1" parent="1" source="arr_t" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="arr_ctp" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_gen" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;Generar TEL&lt;/b&gt; (Weibull)&lt;br/&gt;&lt;b&gt;Generar TAM&lt;/b&gt; (Montecarlo)" vertex="1">
+          <mxGeometry height="60" width="180" x="115" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr2" edge="1" parent="1" source="arr_ctp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="arr_gen" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_tpll" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;TPLL = T + TEL&lt;/b&gt;&lt;br/&gt;(Programar próxima llegada)" vertex="1">
+          <mxGeometry height="50" width="150" x="130" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr3" edge="1" parent="1" source="arr_gen" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="arr_tpll" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_r1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e7f1ff;strokeColor=#0d6efd;strokeWidth=1.5;align=center;padding=5;" value="&lt;b&gt;¿OB + TAM ≤ CB?&lt;/b&gt;&lt;br/&gt;(¿Entra en Buffer?)" vertex="1">
+          <mxGeometry height="100" width="150" x="130" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr4" edge="1" parent="1" source="arr_tpll" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="arr_r1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_discard" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8d7da;strokeColor=#dc3545;strokeWidth=1.5;align=center;" value="&lt;b&gt;CPP = CPP + 1&lt;/b&gt;&lt;br/&gt;(Se descarta paquete)" vertex="1">
+          <mxGeometry height="50" width="130" x="10" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_disc" edge="1" parent="1" source="arr_r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#dc3545;" target="arr_discard" value="NO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_buf" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;OB = OB + TAM&lt;/b&gt;&lt;br/&gt;(Paquete entra al buffer)" vertex="1">
+          <mxGeometry height="50" width="140" x="180" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_buf" edge="1" parent="1" source="arr_r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#198754;" target="arr_buf" value="SÍ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_r2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e7f1ff;strokeColor=#0d6efd;strokeWidth=1.5;align=center;padding=5;" value="&lt;b&gt;¿EstadoAP = Ocioso?&lt;/b&gt;" vertex="1">
+          <mxGeometry height="100" width="150" x="175" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_r2" edge="1" parent="1" source="arr_buf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="arr_r2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_wait" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;Paquete espera en fila&lt;/b&gt;&lt;br/&gt;(Servidor ocupado)" vertex="1">
+          <mxGeometry height="50" width="140" x="355" y="975" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_wait" edge="1" parent="1" source="arr_r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="arr_wait" value="NO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr_tx" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;EstadoAP = Transmitiendo&lt;/b&gt;&lt;br/&gt;TS = TAM / AB&lt;br/&gt;&lt;b&gt;TPS = T + TS&lt;/b&gt;&lt;br/&gt;(Programar salida)" vertex="1">
+          <mxGeometry height="70" width="180" x="160" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_tx" edge="1" parent="1" source="arr_r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#198754;" target="arr_tx" value="SÍ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_t" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;T = TPS&lt;/b&gt;&lt;br/&gt;(Avanza reloj a la salida)" vertex="1">
+          <mxGeometry height="50" width="150" x="560" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mot_dep" edge="1" parent="1" source="motor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;fontStyle=1;strokeColor=#6c757d;strokeWidth=1.5;" target="dep_t" value="NO (Salida)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_ob" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;OB = OB − TAM&lt;/b&gt;&lt;br/&gt;(Se resta de buffer)" vertex="1">
+          <mxGeometry height="50" width="150" x="560" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dep1" edge="1" parent="1" source="dep_t" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="dep_ob" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_r1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e7f1ff;strokeColor=#0d6efd;strokeWidth=1.5;align=center;padding=5;" value="&lt;b&gt;¿OB &amp;gt; 0?&lt;/b&gt;&lt;br/&gt;(¿Quedan paquetes?)" vertex="1">
+          <mxGeometry height="100" width="150" x="560" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dep2" edge="1" parent="1" source="dep_ob" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="dep_r1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_idle" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;EstadoAP = Ocioso&lt;/b&gt;&lt;br/&gt;&lt;b&gt;TPS = ∞&lt;/b&gt;" vertex="1">
+          <mxGeometry height="50" width="140" x="460" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dep_idle" edge="1" parent="1" source="dep_r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" target="dep_idle" value="NO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dep_next" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#343a40;strokeWidth=1.5;align=center;" value="&lt;b&gt;Tomar TAM del siguiente&lt;/b&gt;&lt;br/&gt;TS = TAM / AB&lt;br/&gt;&lt;b&gt;TPS = T + TS&lt;/b&gt;&lt;br/&gt;(Programar salida)" vertex="1">
+          <mxGeometry height="70" width="180" x="630" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dep_next" edge="1" parent="1" source="dep_r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#198754;" target="dep_next" value="SÍ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fin_r" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e7f1ff;strokeColor=#0d6efd;strokeWidth=1.5;align=center;padding=5;" value="&lt;b&gt;¿Fin de simulación?&lt;/b&gt;&lt;br/&gt;(T ≥ TiempoFinal o&lt;br/&gt;CTP = 480)" vertex="1">
+          <mxGeometry height="110" width="170" x="340" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_disc_fin" edge="1" parent="1" source="arr_discard" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;" target="fin_r" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="75" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_arr_wait_fin" edge="1" parent="1" source="arr_wait" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;" target="fin_r" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_arr_tx_fin" edge="1" parent="1" source="arr_tx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;" target="fin_r" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dep_idle_fin" edge="1" parent="1" source="dep_idle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;" target="fin_r" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_dep_next_fin" edge="1" parent="1" source="dep_next" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;" target="fin_r" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="res" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d1e7dd;strokeColor=#198754;strokeWidth=2;fontStyle=1;align=center;" value="&lt;b&gt;Cálculo de Resultados:&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;%PP = (CPP / CTP) * 100&lt;br/&gt;UAP = Utilización del AP" vertex="1">
+          <mxGeometry height="80" width="180" x="335" y="1380" as="geometry" />
+        </mxCell>
+        <mxCell id="e_fin_res" edge="1" parent="1" source="fin_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontStyle=1;strokeColor=#198754;" target="res" value="SÍ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f1f3f5;strokeColor=#495057;strokeWidth=2;fontStyle=1;align=center;" value="&lt;b&gt;FIN&lt;/b&gt;" vertex="1">
+          <mxGeometry height="50" width="100" x="375" y="1500" as="geometry" />
+        </mxCell>
+        <mxCell id="e_res_end" edge="1" parent="1" source="res" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontColor=#333333;strokeColor=#495057;strokeWidth=1.5;" target="end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_loop" edge="1" parent="1" source="fin_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;strokeColor=#dc3545;fontStyle=1;exitDx=0;exitDy=0;" target="motor" value="NO">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="1275" />
+              <mxPoint x="820" y="230" />
+              <mxPoint x="420" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
