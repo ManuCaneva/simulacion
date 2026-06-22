@@ -15,10 +15,11 @@ Aplicación interactiva para el **dimensionamiento de un Módem Wi-Fi** mediante
 ## Instalación y Ejecución
 
 ```bash
-# 1. Ubicarse en el directorio del proyecto
-cd "/home/goya/Escritorio/Facultad/4TO AÑO/Simulación/app"
+# 1. Clonar el repositorio
+git clone <url-del-repo>
+cd <repo-directory>
 
-# 2. Crear un entorno virtual (recomendado para evitar conflictos)
+# 2. Crear un entorno virtual (recomendado)
 python3 -m venv venv
 
 # 3. Activar el entorno virtual
