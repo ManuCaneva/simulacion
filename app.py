@@ -160,6 +160,7 @@ def generar_tel_weibull(r: float) -> float:
 
 def correr_simulacion(cb: int, ab: float):
     lcg = LCG(semilla=17)
+    TIEMPO_FINAL = 300_000_000  # 5 min en μs (ventana de captura 18:25–18:30)
 
     T = 0.0
     TPLL = 0.0
@@ -168,15 +169,18 @@ def correr_simulacion(cb: int, ab: float):
     estado_AP = "Ocioso"
     CPP = 0
     CTP = 0
-    buffer_FIFO: list[int] = []
+    buffer_FIFO: list[tuple[int, float]] = []
     tiempo_total_servicio = 0.0
     tam_actual = 0
     max_ob = 0
 
+    tiempos_espera: list[float] = []
     historial_ctp: list[int] = []
     historial_pp: list[float] = []
+    historial_t: list[float] = []
+    historial_ob: list[int] = []
 
-    while CTP < 1000:
+    while CTP < 1000 and T < TIEMPO_FINAL:
         if TPLL <= TPS:
             T = TPLL
             CTP += 1
@@ -191,12 +195,13 @@ def correr_simulacion(cb: int, ab: float):
                 OB += tam
                 if OB > max_ob:
                     max_ob = OB
-                buffer_FIFO.append(tam)
+                buffer_FIFO.append((tam, T))
                 if estado_AP == "Ocioso":
                     estado_AP = "Transmitiendo"
-                    tam_actual = buffer_FIFO.pop(0)
+                    tam_actual, llegada = buffer_FIFO.pop(0)
                     TS = tam_actual / ab
                     tiempo_total_servicio += TS
+                    tiempos_espera.append(T - llegada)
                     TPS = T + TS
             else:
                 CPP += 1
@@ -204,14 +209,18 @@ def correr_simulacion(cb: int, ab: float):
             T = TPS
             OB -= tam_actual
 
-            if len(buffer_FIFO) > 0:
-                tam_actual = buffer_FIFO.pop(0)
+            if OB > 0:
+                tam_actual, llegada = buffer_FIFO.pop(0)
                 TS = tam_actual / ab
                 tiempo_total_servicio += TS
+                tiempos_espera.append(T - llegada)
                 TPS = T + TS
             else:
                 estado_AP = "Ocioso"
                 TPS = float("inf")
+
+        historial_t.append(T)
+        historial_ob.append(OB)
 
         if CTP > 0:
             pp_temp = (CPP / CTP) * 100.0
@@ -220,8 +229,10 @@ def correr_simulacion(cb: int, ab: float):
 
     pp_final = (CPP / CTP) * 100.0 if CTP > 0 else 0.0
     uap_final = (tiempo_total_servicio / T) * 100.0 if T > 0 else 0.0
+    promedio_espera = sum(tiempos_espera) / len(tiempos_espera) if tiempos_espera else 0.0
+    max_espera = max(tiempos_espera) if tiempos_espera else 0.0
 
-    return pp_final, uap_final, max_ob, historial_ctp, historial_pp
+    return pp_final, uap_final, max_ob, historial_ctp, historial_pp, CTP, CPP, promedio_espera, max_espera, historial_t, historial_ob
 
 
 with st.sidebar:
@@ -254,7 +265,7 @@ with st.sidebar:
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='color:#8a8f98; font-size:12px; border-top:1px solid #23252a; padding-top:16px;'>Motor: Evento-a-Evento · Weibull TEL · Monte Carlo TAM · 1000 paquetes</div>",
+        "<div style='color:#8a8f98; font-size:12px; border-top:1px solid #23252a; padding-top:16px;'>Motor: Evento-a-Evento · Weibull TEL · Monte Carlo TAM · Hasta 1000 paquetes o 5 min</div>",
         unsafe_allow_html=True,
     )
 
@@ -263,35 +274,49 @@ if "sim_run" not in st.session_state:
     st.session_state.pp_final = 0.0
     st.session_state.uap_final = 0.0
     st.session_state.max_ob = 0
+    st.session_state.ctp = 0
+    st.session_state.cpp = 0
+    st.session_state.promedio_espera = 0.0
+    st.session_state.max_espera = 0.0
     st.session_state.historial_ctp = []
     st.session_state.historial_pp = []
+    st.session_state.historial_t = []
+    st.session_state.historial_ob = []
 
 if iniciar:
     with st.spinner("Ejecutando simulación..."):
-        pp_final, uap_final, max_ob, hist_ctp, hist_pp = correr_simulacion(CB, AB)
+        pp_final, uap_final, max_ob, hist_ctp, hist_pp, ctp, cpp, promedio_espera, max_espera, hist_t, hist_ob = correr_simulacion(CB, AB)
     st.session_state.sim_run = True
     st.session_state.pp_final = pp_final
     st.session_state.uap_final = uap_final
     st.session_state.max_ob = max_ob
+    st.session_state.ctp = ctp
+    st.session_state.cpp = cpp
+    st.session_state.promedio_espera = promedio_espera
+    st.session_state.max_espera = max_espera
     st.session_state.historial_ctp = hist_ctp
     st.session_state.historial_pp = hist_pp
+    st.session_state.historial_t = hist_t
+    st.session_state.historial_ob = hist_ob
 
 if st.session_state.sim_run:
     pp = st.session_state.pp_final
     uap = st.session_state.uap_final
+    pto = 100.0 - uap
     max_ob = st.session_state.max_ob
+    ctp = st.session_state.ctp
+    cpp = st.session_state.cpp
+    promedio_espera = st.session_state.promedio_espera
+    max_espera = st.session_state.max_espera
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
-        pp_color = "metric-green" if pp <= 1.0 else "metric-red"
-        pp_label = "Cumple objetivo (≤1.0%)" if pp <= 1.0 else "Excede objetivo (>1.0%)"
         st.markdown(
             f"""
             <div class="metric-card">
-                <div class="metric-label">Porcentaje de Pérdida (%PP)</div>
-                <div class="metric-value {pp_color}">{pp:.2f}%</div>
-                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">{pp_label}</div>
+                <div class="metric-label">CTP — Cantidad Total de Paquetes</div>
+                <div class="metric-value metric-blue">{ctp}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -301,7 +326,34 @@ if st.session_state.sim_run:
         st.markdown(
             f"""
             <div class="metric-card">
-                <div class="metric-label">Utilización del Equipo (UAP)</div>
+                <div class="metric-label">CPP — Paquetes Perdidos</div>
+                <div class="metric-value metric-blue">{cpp}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col3:
+        pp_color = "metric-green" if pp <= 1.0 else "metric-red"
+        pp_label = "Cumple (≤1.0%)" if pp <= 1.0 else "Excede (>1.0%)"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">%PP — Porcentaje de Pérdida</div>
+                <div class="metric-value {pp_color}">{pp:.2f}%</div>
+                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">{pp_label}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">UAP — Utilización del AP</div>
                 <div class="metric-value metric-blue">{uap:.2f}%</div>
                 <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Tiempo transmitiendo / Tiempo total</div>
             </div>
@@ -309,17 +361,56 @@ if st.session_state.sim_run:
             unsafe_allow_html=True,
         )
 
-    utilizacion_pct = (100 * max_ob) / CB if CB > 0 else 0
-    st.markdown(
-        f"""
-        <div class="metric-card">
-            <div class="metric-label">Pico de Ocupación del Buffer</div>
-            <div class="metric-value metric-blue">{max_ob} / {CB} bytes</div>
-            <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Máximo uso del buffer durante la simulación ({utilizacion_pct:.1f}%)</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with col5:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">PTO — Porcentaje Tiempo Ocioso</div>
+                <div class="metric-value metric-blue">{pto:.2f}%</div>
+                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Tiempo ocioso / Tiempo total</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col6:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">T. Espera Prom. en Buffer</div>
+                <div class="metric-value metric-blue">{promedio_espera / 1000:.2f} ms</div>
+                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Promedio de espera antes de transmitir</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    col7, col8 = st.columns(2)
+
+    with col7:
+        utilizacion_pct = (100 * max_ob) / CB if CB > 0 else 0
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">Pico de Ocupación del Buffer</div>
+                <div class="metric-value metric-blue">{max_ob} / {CB} bytes</div>
+                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Máximo uso del buffer ({utilizacion_pct:.1f}% de CB)</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col8:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">Tiempo Máximo de Espera Registrado</div>
+                <div class="metric-value metric-blue">{max_espera / 1000:.2f} ms</div>
+                <div style="color:#8a8f98; font-size:13px; margin-top:8px;">Peor caso de espera en el buffer</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.markdown('<hr class="divider">', unsafe_allow_html=True)
     st.markdown(
@@ -348,7 +439,7 @@ if st.session_state.sim_run:
             title=dict(text="CTP — Cantidad Total de Paquetes", font=dict(color="#8a8f98", size=13)),
             tickfont=dict(color="#8a8f98", size=12),
             gridcolor="#1a1b1e",
-            range=[0, 1000],
+            range=[0, max(ctp, 1)],
             dtick=100,
         ),
         yaxis=dict(
@@ -362,6 +453,58 @@ if st.session_state.sim_run:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown('<hr class="divider">', unsafe_allow_html=True)
+    st.markdown(
+        "<div style='color:#d0d6e0; font-size:20px; font-weight:500; letter-spacing:-0.3px; margin-bottom:8px;'>Evolución de la Ocupación del Buffer (OB)</div>",
+        unsafe_allow_html=True,
+    )
+
+    t_segundos = [t / 1_000_000 for t in st.session_state.historial_t]
+
+    fig2 = go.Figure()
+    fig2.add_trace(
+        go.Scatter(
+            x=t_segundos,
+            y=st.session_state.historial_ob,
+            mode="lines",
+            line=dict(color="#5e6ad2", width=2),
+            hovertemplate="Tiempo: %{x:.2f}s<br>OB: %{y} bytes",
+            name="OB",
+        )
+    )
+    fig2.add_hline(
+        y=CB,
+        line_dash="dash",
+        line_color="#e5484d",
+        line_width=1.5,
+        annotation_text=f"CB = {CB} bytes",
+        annotation_position="top right",
+        annotation_font=dict(color="#e5484d", size=12),
+    )
+
+    fig2.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#010102",
+        plot_bgcolor="#010102",
+        margin=dict(l=40, r=20, t=10, b=40),
+        xaxis=dict(
+            title=dict(text="Tiempo (s)", font=dict(color="#8a8f98", size=13)),
+            tickfont=dict(color="#8a8f98", size=12),
+            gridcolor="#1a1b1e",
+        ),
+        yaxis=dict(
+            title=dict(text="Ocupación del Buffer (bytes)", font=dict(color="#8a8f98", size=13)),
+            tickfont=dict(color="#8a8f98", size=12),
+            gridcolor="#1a1b1e",
+            zeroline=False,
+            range=[0, max(CB, max_ob) * 1.1],
+        ),
+        hovermode="x unified",
+        showlegend=False,
+    )
+
+    st.plotly_chart(fig2, use_container_width=True)
 
 else:
     st.markdown(

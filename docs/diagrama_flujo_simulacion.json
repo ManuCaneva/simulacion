@@ -1,0 +1,333 @@
+{
+  "version": "30.2.5",
+  "pages": [
+    {
+      "id": "diagram_1",
+      "name": "Simulación Evento a Evento",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "init",
+          "type": "node",
+          "parent": "1",
+          "label": "1. Inicio y Condiciones Iniciales (C.I.)\n\nT = 0 (Reloj)\nTPLL = 0\nTPS = ∞ (HV)\nOB = 0 (Buffer vacío)\nEstadoAP = Ocioso\nCPP = 0 (Paquetes Perdidos)\nCTP = 0 (Total Paquetes)",
+          "html": "<b>1. Inicio y Condiciones Iniciales (C.I.)</b><br/><br/>T = 0 (Reloj)<br/>TPLL = 0<br/>TPS = ∞ (HV)<br/>OB = 0 (Buffer vacío)<br/>EstadoAP = Ocioso<br/>CPP = 0 (Paquetes Perdidos)<br/>CTP = 0 (Total Paquetes)"
+        },
+        {
+          "id": "motor",
+          "type": "node",
+          "parent": "1",
+          "label": "¿TPLL ≤ TPS?\n(Motor Evento a Evento)",
+          "html": "<b>¿TPLL ≤ TPS?</b><br/>(Motor Evento a Evento)"
+        },
+        {
+          "id": "e_init_motor",
+          "type": "edge",
+          "parent": "1",
+          "source": "init",
+          "target": "motor"
+        },
+        {
+          "id": "arr_t",
+          "type": "node",
+          "parent": "1",
+          "label": "T = TPLL\n(Avanza reloj a la llegada)",
+          "html": "<b>T = TPLL</b><br/>(Avanza reloj a la llegada)"
+        },
+        {
+          "id": "e_mot_arr",
+          "type": "edge",
+          "parent": "1",
+          "source": "motor",
+          "target": "arr_t",
+          "label": "SÍ (Llegada)"
+        },
+        {
+          "id": "arr_ctp",
+          "type": "node",
+          "parent": "1",
+          "label": "CTP = CTP + 1\n(Nuevo paquete)",
+          "html": "<b>CTP = CTP + 1</b><br/>(Nuevo paquete)"
+        },
+        {
+          "id": "e_arr1",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_t",
+          "target": "arr_ctp"
+        },
+        {
+          "id": "arr_gen",
+          "type": "node",
+          "parent": "1",
+          "label": "Generar TEL (Weibull)\nGenerar TAM (Montecarlo)",
+          "html": "<b>Generar TEL</b> (Weibull)<br/><b>Generar TAM</b> (Montecarlo)"
+        },
+        {
+          "id": "e_arr2",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_ctp",
+          "target": "arr_gen"
+        },
+        {
+          "id": "arr_tpll",
+          "type": "node",
+          "parent": "1",
+          "label": "TPLL = T + TEL\n(Programar próxima llegada)",
+          "html": "<b>TPLL = T + TEL</b><br/>(Programar próxima llegada)"
+        },
+        {
+          "id": "e_arr3",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_gen",
+          "target": "arr_tpll"
+        },
+        {
+          "id": "arr_r1",
+          "type": "node",
+          "parent": "1",
+          "label": "¿OB + TAM ≤ CB?\n(¿Entra en Buffer?)",
+          "html": "<b>¿OB + TAM ≤ CB?</b><br/>(¿Entra en Buffer?)"
+        },
+        {
+          "id": "e_arr4",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_tpll",
+          "target": "arr_r1"
+        },
+        {
+          "id": "arr_discard",
+          "type": "node",
+          "parent": "1",
+          "label": "CPP = CPP + 1\n(Se descarta paquete)",
+          "html": "<b>CPP = CPP + 1</b><br/>(Se descarta paquete)"
+        },
+        {
+          "id": "e_arr_disc",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_r1",
+          "target": "arr_discard",
+          "label": "NO"
+        },
+        {
+          "id": "arr_buf",
+          "type": "node",
+          "parent": "1",
+          "label": "OB = OB + TAM\n(Paquete entra al buffer)",
+          "html": "<b>OB = OB + TAM</b><br/>(Paquete entra al buffer)"
+        },
+        {
+          "id": "e_arr_buf",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_r1",
+          "target": "arr_buf",
+          "label": "SÍ"
+        },
+        {
+          "id": "arr_r2",
+          "type": "node",
+          "parent": "1",
+          "label": "¿EstadoAP = Ocioso?",
+          "html": "<b>¿EstadoAP = Ocioso?</b>"
+        },
+        {
+          "id": "e_arr_r2",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_buf",
+          "target": "arr_r2"
+        },
+        {
+          "id": "arr_wait",
+          "type": "node",
+          "parent": "1",
+          "label": "Paquete espera en fila\n(Servidor ocupado)",
+          "html": "<b>Paquete espera en fila</b><br/>(Servidor ocupado)"
+        },
+        {
+          "id": "e_arr_wait",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_r2",
+          "target": "arr_wait",
+          "label": "NO"
+        },
+        {
+          "id": "arr_tx",
+          "type": "node",
+          "parent": "1",
+          "label": "EstadoAP = Transmitiendo\nTS = TAM / AB\nTPS = T + TS\n(Programar salida)",
+          "html": "<b>EstadoAP = Transmitiendo</b><br/>TS = TAM / AB<br/><b>TPS = T + TS</b><br/>(Programar salida)"
+        },
+        {
+          "id": "e_arr_tx",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_r2",
+          "target": "arr_tx",
+          "label": "SÍ"
+        },
+        {
+          "id": "dep_t",
+          "type": "node",
+          "parent": "1",
+          "label": "T = TPS\n(Avanza reloj a la salida)",
+          "html": "<b>T = TPS</b><br/>(Avanza reloj a la salida)"
+        },
+        {
+          "id": "e_mot_dep",
+          "type": "edge",
+          "parent": "1",
+          "source": "motor",
+          "target": "dep_t",
+          "label": "NO (Salida)"
+        },
+        {
+          "id": "dep_ob",
+          "type": "node",
+          "parent": "1",
+          "label": "OB = OB − TAM\n(Se resta de buffer)",
+          "html": "<b>OB = OB − TAM</b><br/>(Se resta de buffer)"
+        },
+        {
+          "id": "e_dep1",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_t",
+          "target": "dep_ob"
+        },
+        {
+          "id": "dep_r1",
+          "type": "node",
+          "parent": "1",
+          "label": "¿OB > 0?\n(¿Quedan paquetes?)",
+          "html": "<b>¿OB &gt; 0?</b><br/>(¿Quedan paquetes?)"
+        },
+        {
+          "id": "e_dep2",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_ob",
+          "target": "dep_r1"
+        },
+        {
+          "id": "dep_idle",
+          "type": "node",
+          "parent": "1",
+          "label": "EstadoAP = Ocioso\nTPS = ∞",
+          "html": "<b>EstadoAP = Ocioso</b><br/><b>TPS = ∞</b>"
+        },
+        {
+          "id": "e_dep_idle",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_r1",
+          "target": "dep_idle",
+          "label": "NO"
+        },
+        {
+          "id": "dep_next",
+          "type": "node",
+          "parent": "1",
+          "label": "Tomar TAM del siguiente\nTS = TAM / AB\nTPS = T + TS\n(Programar salida)",
+          "html": "<b>Tomar TAM del siguiente</b><br/>TS = TAM / AB<br/><b>TPS = T + TS</b><br/>(Programar salida)"
+        },
+        {
+          "id": "e_dep_next",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_r1",
+          "target": "dep_next",
+          "label": "SÍ"
+        },
+        {
+          "id": "fin_r",
+          "type": "node",
+          "parent": "1",
+          "label": "¿Fin de simulación?\n(T ≥ TiempoFinal o\nCTP = 1000)",
+          "html": "<b>¿Fin de simulación?</b><br>(T ≥ TiempoFinal o<br>CTP = 1000)"
+        },
+        {
+          "id": "e_arr_disc_fin",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_discard",
+          "target": "fin_r"
+        },
+        {
+          "id": "e_arr_wait_fin",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_wait",
+          "target": "fin_r"
+        },
+        {
+          "id": "e_arr_tx_fin",
+          "type": "edge",
+          "parent": "1",
+          "source": "arr_tx",
+          "target": "fin_r"
+        },
+        {
+          "id": "e_dep_idle_fin",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_idle",
+          "target": "fin_r"
+        },
+        {
+          "id": "e_dep_next_fin",
+          "type": "edge",
+          "parent": "1",
+          "source": "dep_next",
+          "target": "fin_r"
+        },
+        {
+          "id": "res",
+          "type": "node",
+          "parent": "1",
+          "label": "Cálculo de Resultados:\n\n%PP = (CPP / CTP) * 100\nUAP = Utilización del AP",
+          "html": "<b>Cálculo de Resultados:</b><br/><br/>%PP = (CPP / CTP) * 100<br/>UAP = Utilización del AP"
+        },
+        {
+          "id": "e_fin_res",
+          "type": "edge",
+          "parent": "1",
+          "source": "fin_r",
+          "target": "res",
+          "label": "SÍ"
+        },
+        {
+          "id": "end",
+          "type": "node",
+          "parent": "1",
+          "label": "FIN",
+          "html": "<b>FIN</b>"
+        },
+        {
+          "id": "e_res_end",
+          "type": "edge",
+          "parent": "1",
+          "source": "res",
+          "target": "end"
+        },
+        {
+          "id": "e_loop",
+          "type": "edge",
+          "parent": "1",
+          "source": "fin_r",
+          "target": "motor",
+          "label": "NO"
+        }
+      ]
+    }
+  ]
+}
