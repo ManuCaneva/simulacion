@@ -158,9 +158,9 @@ def generar_tel_weibull(r: float) -> float:
     return 2.0 + 553469.134 * (-math.log(1.0 - r)) ** (1.0 / 0.842551)
 
 
-def correr_simulacion(cb: int, ab: float):
+def correr_simulacion(cb: int, ab: float, max_paquetes: int = 1000, usar_tiempo_final: bool = True, tiempo_final_min: int = 5):
     lcg = LCG(semilla=17)
-    TIEMPO_FINAL = 300_000_000  # 5 min en μs (ventana de captura 18:25–18:30)
+    TIEMPO_FINAL = tiempo_final_min * 60 * 1_000_000 if usar_tiempo_final else float("inf")
 
     T = 0.0
     TPLL = 0.0
@@ -180,7 +180,7 @@ def correr_simulacion(cb: int, ab: float):
     historial_t: list[float] = []
     historial_ob: list[int] = []
 
-    while CTP < 1000 and T < TIEMPO_FINAL:
+    while CTP < max_paquetes and T < TIEMPO_FINAL:
         if TPLL <= TPS:
             T = TPLL
             CTP += 1
@@ -259,6 +259,30 @@ with st.sidebar:
         format="%d",
     )
 
+    st.markdown("---")
+
+    MAX_PAQUETES = st.number_input(
+        "Máximo de paquetes (CTP)",
+        min_value=100,
+        max_value=10000,
+        value=1000,
+        step=100,
+        format="%d",
+    )
+
+    USAR_TIEMPO_FINAL = st.checkbox("Limitar por tiempo", value=True)
+
+    TIEMPO_FINAL_MIN = 5
+    if USAR_TIEMPO_FINAL:
+        TIEMPO_FINAL_MIN = st.number_input(
+            "Tiempo máximo (min)",
+            min_value=1,
+            max_value=60,
+            value=5,
+            step=1,
+            format="%d",
+        )
+
     st.markdown("<br>", unsafe_allow_html=True)
 
     iniciar = st.button("Iniciar Simulación", type="primary")
@@ -278,6 +302,7 @@ if "sim_run" not in st.session_state:
     st.session_state.cpp = 0
     st.session_state.promedio_espera = 0.0
     st.session_state.max_espera = 0.0
+    st.session_state.max_paquetes = 1000
     st.session_state.historial_ctp = []
     st.session_state.historial_pp = []
     st.session_state.historial_t = []
@@ -285,7 +310,7 @@ if "sim_run" not in st.session_state:
 
 if iniciar:
     with st.spinner("Ejecutando simulación..."):
-        pp_final, uap_final, max_ob, hist_ctp, hist_pp, ctp, cpp, promedio_espera, max_espera, hist_t, hist_ob = correr_simulacion(CB, AB)
+        pp_final, uap_final, max_ob, hist_ctp, hist_pp, ctp, cpp, promedio_espera, max_espera, hist_t, hist_ob = correr_simulacion(CB, AB, MAX_PAQUETES, USAR_TIEMPO_FINAL, TIEMPO_FINAL_MIN)
     st.session_state.sim_run = True
     st.session_state.pp_final = pp_final
     st.session_state.uap_final = uap_final
@@ -294,6 +319,7 @@ if iniciar:
     st.session_state.cpp = cpp
     st.session_state.promedio_espera = promedio_espera
     st.session_state.max_espera = max_espera
+    st.session_state.max_paquetes = MAX_PAQUETES
     st.session_state.historial_ctp = hist_ctp
     st.session_state.historial_pp = hist_pp
     st.session_state.historial_t = hist_t
@@ -439,7 +465,7 @@ if st.session_state.sim_run:
             title=dict(text="CTP — Cantidad Total de Paquetes", font=dict(color="#8a8f98", size=13)),
             tickfont=dict(color="#8a8f98", size=12),
             gridcolor="#1a1b1e",
-            range=[0, max(ctp, 1)],
+            range=[0, st.session_state.max_paquetes],
             dtick=100,
         ),
         yaxis=dict(
