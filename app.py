@@ -155,11 +155,11 @@ def generar_tam_montecarlo(r: float) -> int:
 
 
 def generar_tel_weibull(r: float) -> float:
-    return 2.0 + 553469.134 * (-math.log(1.0 - r)) ** (1.0 / 0.842551)
+    return 2.0 + 137108.2 * (-math.log(1.0 - r)) ** (1.0 / 0.842551)
 
 
-def correr_simulacion(cb: int, ab: float, max_paquetes: int = 1000, usar_tiempo_final: bool = True, tiempo_final_min: int = 5):
-    lcg = LCG(semilla=17)
+def correr_simulacion(cb: int, ab: float, semilla: int = 17, max_paquetes: int = 2000, usar_tiempo_final: bool = True, tiempo_final_min: int = 5):
+    lcg = LCG(semilla=semilla)
     TIEMPO_FINAL = tiempo_final_min * 60 * 1_000_000 if usar_tiempo_final else float("inf")
 
     T = 0.0
@@ -243,19 +243,28 @@ with st.sidebar:
 
     CB = st.number_input(
         "CB — Capacidad del Buffer (bytes)",
-        min_value=1000,
-        max_value=50000,
-        value=10000,
-        step=1000,
+        min_value=100,
+        max_value=100000,
+        value=2000,
+        step=100,
         format="%d",
     )
 
     AB = st.number_input(
         "AB — Ancho de Banda (bytes/μs)",
-        min_value=10,
-        max_value=500,
-        value=100,
-        step=10,
+        min_value=1,
+        max_value=100000,
+        value=10,
+        step=1,
+        format="%d",
+    )
+
+    SEMILLA = st.number_input(
+        "Semilla LCG (X₀)",
+        min_value=1,
+        max_value=100000,
+        value=17,
+        step=1,
         format="%d",
     )
 
@@ -264,8 +273,8 @@ with st.sidebar:
     MAX_PAQUETES = st.number_input(
         "Máximo de paquetes (CTP)",
         min_value=100,
-        max_value=10000,
-        value=1000,
+        max_value=50000,
+        value=2000,
         step=100,
         format="%d",
     )
@@ -274,13 +283,12 @@ with st.sidebar:
 
     TIEMPO_FINAL_MIN = 5
     if USAR_TIEMPO_FINAL:
-        TIEMPO_FINAL_MIN = st.number_input(
+        TIEMPO_FINAL_MIN = st.slider(
             "Tiempo máximo (min)",
             min_value=1,
             max_value=60,
             value=5,
             step=1,
-            format="%d",
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -289,7 +297,7 @@ with st.sidebar:
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown(
-        "<div style='color:#8a8f98; font-size:12px; border-top:1px solid #23252a; padding-top:16px;'>Motor: Evento-a-Evento · Weibull TEL · Monte Carlo TAM · Hasta 1000 paquetes o 5 min</div>",
+        "<div style='color:#8a8f98; font-size:12px; border-top:1px solid #23252a; padding-top:16px;'>Motor: Evento-a-Evento · Weibull TEL · Monte Carlo TAM</div>",
         unsafe_allow_html=True,
     )
 
@@ -302,7 +310,7 @@ if "sim_run" not in st.session_state:
     st.session_state.cpp = 0
     st.session_state.promedio_espera = 0.0
     st.session_state.max_espera = 0.0
-    st.session_state.max_paquetes = 1000
+    st.session_state.max_paquetes = 2000
     st.session_state.historial_ctp = []
     st.session_state.historial_pp = []
     st.session_state.historial_t = []
@@ -310,7 +318,7 @@ if "sim_run" not in st.session_state:
 
 if iniciar:
     with st.spinner("Ejecutando simulación..."):
-        pp_final, uap_final, max_ob, hist_ctp, hist_pp, ctp, cpp, promedio_espera, max_espera, hist_t, hist_ob = correr_simulacion(CB, AB, MAX_PAQUETES, USAR_TIEMPO_FINAL, TIEMPO_FINAL_MIN)
+        pp_final, uap_final, max_ob, hist_ctp, hist_pp, ctp, cpp, promedio_espera, max_espera, hist_t, hist_ob = correr_simulacion(CB, AB, SEMILLA, MAX_PAQUETES, USAR_TIEMPO_FINAL, TIEMPO_FINAL_MIN)
     st.session_state.sim_run = True
     st.session_state.pp_final = pp_final
     st.session_state.uap_final = uap_final

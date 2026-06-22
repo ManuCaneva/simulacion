@@ -41,23 +41,41 @@ La aplicación se abrirá en el navegador en `http://localhost:8501`.
 ### Barra Lateral (Controles)
 
 | Control | Rango | Defecto | Descripción |
-|---|---|---|---|
-| **CB** — Capacidad del Buffer | 1000 – 50000 bytes | 10000 | Tamaño máximo del buffer del Módem |
-| **AB** — Ancho de Banda | 10 – 500 bytes/μs | 100 | Tasa de servicio del AP |
+|---|---|---|---|---|
+| **CB** — Capacidad del Buffer | 100 – 100.000 bytes | 2000 | Tamaño máximo del buffer del Módem |
+| **AB** — Ancho de Banda | 1 – 100.000 bytes/μs | 10 | Tasa de servicio del AP |
+| **Semilla LCG** (X₀) | 1 – 100.000 | 17 | Semilla del generador de números pseudoaleatorios |
+| **Máx. paquetes (CTP)** | 100 – 50.000 | 2000 | Cantidad máxima de paquetes a generar |
+| **Limitar por tiempo** | checkbox | activado | Habilita límite de tiempo de simulación (por defecto 5 min) |
+| **Tiempo máximo** | 1 – 60 min | 5 | Ventana de simulación (solo si el checkbox está activo) |
 
 ### Área Principal (Resultados)
 
-Al presionar **"Iniciar Simulación"** se muestran tres tarjetas y un gráfico:
+Al presionar **"Iniciar Simulación"** se muestran ocho tarjetas de indicadores y dos gráficos interactivos:
 
-1. **Porcentaje de Pérdida (%PP)** — Paquetes descartados por buffer lleno.  
-   - Verde si ≤ 1.0% (cumple el objetivo de calidad).  
+**Fila 1 — Indicadores principales (3 columnas):**
+
+1. **CTP — Cantidad Total de Paquetes** — Paquetes que llegaron al sistema.
+2. **CPP — Paquetes Perdidos** — Paquetes descartados por buffer lleno.
+3. **%PP — Porcentaje de Pérdida** — `(CPP / CTP) × 100`.
+   - Verde si ≤ 1.0% (cumple el objetivo de calidad).
    - Rojo si > 1.0% (excede el objetivo).
 
-2. **Utilización del Equipo (UAP)** — Porcentaje del tiempo que el AP estuvo transmitiendo.
+**Fila 2 — Indicadores secundarios (3 columnas):**
 
-3. **Pico de Ocupación del Buffer** — Máxima cantidad de bytes acumulados en el buffer durante la simulación. Sirve para ver si el buffer dimensionado estuvo cerca de desbordarse.
+4. **UAP — Utilización del AP** — Porcentaje del tiempo que el AP estuvo transmitiendo.
+5. **PTO — Porcentaje Tiempo Ocioso** — `100% - UAP`.
+6. **T. Espera Prom. en Buffer** — Tiempo promedio que cada paquete esperó antes de ser transmitido.
 
-4. **Gráfico de Estabilización** — Evolución del %PP acumulado vs. paquetes procesados (CTP 0–1000). Interactivo (zoom, pan, hover).
+**Fila 3 — Indicadores adicionales (2 columnas):**
+
+7. **Pico de Ocupación del Buffer** — Máxima cantidad de bytes acumulados en el buffer durante la simulación.
+8. **Tiempo Máximo de Espera Registrado** — Peor caso de espera en el buffer.
+
+**Gráficos:**
+
+- **Estabilización del %PP** — Evolución del %PP acumulado vs. CTP. Permite observar a partir de cuántos paquetes el porcentaje se estabiliza.
+- **Evolución de la Ocupación del Buffer (OB)** — OB vs. tiempo (segundos), con línea punteja roja indicando CB.
 
 ## Motor de Simulación
 
@@ -71,6 +89,7 @@ El reloj `T` salta asimétricamente hacia el evento más próximo (Llegada o Sal
 |---|---|
 | `CB` | Capacidad del buffer (bytes) — variable de control |
 | `AB` | Ancho de banda (bytes/μs) — variable de control |
+| `X₀` | Semilla del LCG — variable de control |
 | `TEL` | Tiempo entre llegadas (Weibull, 3 parámetros) |
 | `TAM` | Tamaño del paquete (distribución empírica bimodal, Monte Carlo) |
 | `OB(t)` | Ocupación del buffer en el instante t |
@@ -78,18 +97,20 @@ El reloj `T` salta asimétricamente hacia el evento más próximo (Llegada o Sal
 | `CPP` | Cantidad de paquetes perdidos |
 | `%PP` | `(CPP / CTP) × 100` |
 | `UAP` | `(Σ TSᵢ / T_total) × 100` |
+| `PTO` | `100% - UAP` — tiempo ocioso del AP |
+| `T. Espera Prom.` | Promedio de `(T_transmisión - T_llegada)` para cada paquete transmitido |
 
 ### Generadores de Variables Aleatorias
 
 **Tiempo Entre Llegadas** — Transformada Inversa Weibull (3 parámetros):
 
 ```
-TEL_i = 2.0 + 553469.134 × (-ln(1 - r_i))^(1/0.842551)
+TEL_i = 2.0 + 137108.2 × (-ln(1 - r_i))^(1/0.842551)
 ```
 
-Parámetros obtenidos del ajuste sobre datos reales:
+Parámetros obtenidos del ajuste sobre datos reales (2000 paquetes en 5 min → TEL medio ≈ 150 ms):
 - Forma (α): 0.842551
-- Escala (β): 553469.134 μs
+- Escala (β): 137108.2 μs
 - Localización (γ): 2.0 μs
 
 **Tamaño del Paquete** — Método de Monte Carlo sobre distribución empírica.
@@ -102,7 +123,7 @@ Se utiliza un **Algoritmo Congruencial Lineal** con los siguientes parámetros:
 
 | Parámetro | Valor |
 |---|---|
-| Semilla X₀ | 17 |
+| Semilla X₀ | 17 (configurable desde el sidebar) |
 | Multiplicador a | 1.664.525 |
 | Incremento c | 1.013.904.223 |
 | Módulo m | 2³² = 4.294.967.296 |
@@ -113,11 +134,15 @@ Los 2000 números generados pasan las 6 pruebas estadísticas (Medias, Varianza,
 
 El objetivo es **determinar la capacidad de buffer y ancho de banda mínimos** que necesita un Módem para soportar el tráfico capturado manteniendo %PP ≤ 1%.
 
-| Escenario | CB | AB | Resultado esperado |
-|---|---|---|---|
-| Módem mínimo | 1000–2000 | 10 | %PP > 1% — no cumple |
-| Módem justo | 2000–5000 | 10–50 | %PP ≤ 1% — cumple |
-| Módem seguro | ≥ 5000 | cualquier | %PP ≈ 0% — cumple sobradamente |
+Con los controles del sidebar se pueden explorar estos escenarios:
+
+| Escenario | CB | AB | %PP | ¿Cumple? |
+|---|---|---|---|---|
+| Módem mínimo (paquetes grandes > CB) | 1000 | 10 | ~44% | ❌ |
+| Módem justo (límite) | 2000 | 10 | ~0.25% | ✅ |
+| Módem sobrado | 5000 | 10 | ~0% | ✅ |
+
+> **Nota:** Los datos capturados en hora pico (18:25–18:30) ya incluyen todo el tráfico de la facultad. Con ~6.7 paquetes/s promedio, el AP está ocioso >99% del tiempo. La pérdida de paquetes se debe exclusivamente a que el tamaño del paquete supera la capacidad del buffer (CB), no a congestión por exceso de tráfico.
 
 ## Diseño Visual
 
